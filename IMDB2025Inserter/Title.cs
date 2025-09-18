@@ -26,7 +26,7 @@ namespace IMDB2025Inserter
         public string ToSQL()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append($"INSERT INTO Titles (Id, TitleType, PrimaryTitle, " +
+            sb.Append($"INSERT INTO Titles (Id, TypeId, PrimaryTitle, " +
                 $"OriginalTitle, IsAdult, StartYear, EndYear, RuntimeMinutes) " +
                 $"VALUES (");
             sb.Append($"{Id}, ");

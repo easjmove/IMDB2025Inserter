@@ -36,7 +36,8 @@ foreach (string titleString in imdbData)
                 Genres = values[8] == "\\N" ? new List<string>() : values[8].Split(',').ToList()
             };
 
-            SqlCommand sqlComm = new SqlCommand("", sqlConn, sqlTrans);
+            SqlCommand sqlComm = new SqlCommand(title.ToSQL(), sqlConn, sqlTrans);
+            sqlComm.ExecuteNonQuery();
         }
         catch (Exception ex)
         {
@@ -50,7 +51,7 @@ foreach (string titleString in imdbData)
     }
 }
 
-sqlTrans.Rollback();
+sqlTrans.Commit();
 sqlConn.Close();
 
 void AddTitleType(string titleType, SqlConnection sqlConn, SqlTransaction sqlTrans, Dictionary<string, int> TitleTypes)
@@ -58,7 +59,7 @@ void AddTitleType(string titleType, SqlConnection sqlConn, SqlTransaction sqlTra
     if (!TitleTypes.ContainsKey(titleType))
     {
         SqlCommand sqlComm = new SqlCommand(
-            "INSERT INTO TitleTypes (TitleType) VALUES (" + titleType + "); " +
+            "INSERT INTO TitleTypes (Type) VALUES ('" + titleType + "'); " +
             "SELECT SCOPE_IDENTITY();", sqlConn, sqlTrans);
         int newId = Convert.ToInt32(sqlComm.ExecuteScalar());
         TitleTypes[titleType] = newId;
