@@ -1,16 +1,26 @@
 ﻿using IMDB2025Inserter;
 using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 
 string connectionString = "Server=localhost;Database=IMDB;" +
     "integrated security=True;TrustServerCertificate=True;";
+
+Stopwatch sw = new Stopwatch();
+sw.Start();
+
 SqlConnection sqlConn = new SqlConnection(connectionString);
 sqlConn.Open();
 SqlTransaction sqlTrans = sqlConn.BeginTransaction();
 
+SqlCommand cmd = new SqlCommand("SET IDENTITY_INSERT Titles ON;", sqlConn, sqlTrans);
+cmd.ExecuteNonQuery();
+
+PreparedSql preparedSql = new PreparedSql(sqlConn, sqlTrans);
+
 Dictionary<string, int> TitleTypes = new Dictionary<string, int>();
 
 string filename = "c:/temp/title.basics.tsv";
-IEnumerable<string> imdbData = File.ReadAllLines(filename).Skip(1).Take(1000);
+IEnumerable<string> imdbData = File.ReadAllLines(filename).Skip(1).Take(10000);
 foreach (string titleString in imdbData)
 {
     string[] values = titleString.Split('\t');
@@ -36,8 +46,9 @@ foreach (string titleString in imdbData)
                 Genres = values[8] == "\\N" ? new List<string>() : values[8].Split(',').ToList()
             };
 
-            SqlCommand sqlComm = new SqlCommand(title.ToSQL(), sqlConn, sqlTrans);
-            sqlComm.ExecuteNonQuery();
+            //SqlCommand sqlComm = new SqlCommand(title.ToSQL(), sqlConn, sqlTrans);
+            //sqlComm.ExecuteNonQuery();
+            preparedSql.InsertTitle(title);
         }
         catch (Exception ex)
         {
@@ -50,9 +61,15 @@ foreach (string titleString in imdbData)
         Console.WriteLine("Not 9 values: " + titleString);
     }
 }
-
-sqlTrans.Commit();
+cmd = new SqlCommand("SET IDENTITY_INSERT Titles OFF;", sqlConn, sqlTrans);
+cmd.ExecuteNonQuery();
+sqlTrans.Rollback();
 sqlConn.Close();
+
+sw.Stop();
+Console.WriteLine("Millisekunder: " + sw.ElapsedMilliseconds);
+Console.WriteLine("Alle records: " + 1200 * sw.ElapsedMilliseconds);
+Console.WriteLine("Alle records i timer: " + (1200.0 * sw.ElapsedMilliseconds)/1000.0/60.0/60.0);
 
 void AddTitleType(string titleType, SqlConnection sqlConn, SqlTransaction sqlTrans, Dictionary<string, int> TitleTypes)
 {
