@@ -12,10 +12,11 @@ SqlConnection sqlConn = new SqlConnection(connectionString);
 sqlConn.Open();
 SqlTransaction sqlTrans = sqlConn.BeginTransaction();
 
-SqlCommand cmd = new SqlCommand("SET IDENTITY_INSERT Titles ON;", sqlConn, sqlTrans);
-cmd.ExecuteNonQuery();
+//SqlCommand cmd = new SqlCommand("SET IDENTITY_INSERT Titles ON;", sqlConn, sqlTrans);
+//cmd.ExecuteNonQuery();
 
-PreparedSql preparedSql = new PreparedSql(sqlConn, sqlTrans);
+//PreparedSql preparedSql = new PreparedSql(sqlConn, sqlTrans);
+BulkSql bulkSql = new BulkSql();
 
 Dictionary<string, int> TitleTypes = new Dictionary<string, int>();
 
@@ -48,7 +49,10 @@ foreach (string titleString in imdbData)
 
             //SqlCommand sqlComm = new SqlCommand(title.ToSQL(), sqlConn, sqlTrans);
             //sqlComm.ExecuteNonQuery();
-            preparedSql.InsertTitle(title);
+
+            //preparedSql.InsertTitle(title);
+
+            bulkSql.InsertTitle(title);
         }
         catch (Exception ex)
         {
@@ -61,6 +65,14 @@ foreach (string titleString in imdbData)
         Console.WriteLine("Not 9 values: " + titleString);
     }
 }
+Console.WriteLine("Millisekunder: " + sw.ElapsedMilliseconds);
+
+sw.Restart();
+
+SqlCommand cmd = new SqlCommand("SET IDENTITY_INSERT Titles ON;", sqlConn, sqlTrans);
+cmd.ExecuteNonQuery();
+bulkSql.InsertIntoDB(sqlConn, sqlTrans);
+
 cmd = new SqlCommand("SET IDENTITY_INSERT Titles OFF;", sqlConn, sqlTrans);
 cmd.ExecuteNonQuery();
 sqlTrans.Rollback();
